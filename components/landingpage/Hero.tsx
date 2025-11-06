@@ -20,7 +20,7 @@ export default function Hero() {
         <div className="container mx-auto px-6 text-center">
           {/* Main heading */}
           <h1 className="font-sf-pro text-5xl lg:text-8xl font-bold mb-1 text-[#FAFAFA] tracking-widest leading-tight">
-            MecChain
+            MedChain
           </h1>
           <p className="text-lg text-gray-300 mb-5 font-sf-pro-regular tracking-widest">
             Your modern healthcare solution
