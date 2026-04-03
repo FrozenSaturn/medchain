@@ -124,7 +124,7 @@ Please provide a helpful response based on the available medical data.`;
 
     // Create a chat session with Gemini
     const chat = genAI.chats.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-flash-latest",
       history:
         history?.map((msg: any) => ({
           role: msg.role === "user" ? "user" : "model",

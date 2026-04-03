@@ -1,32 +1,6 @@
-export const CONTRACT_ADDRESS2 = "0x25d6d8758FaB9Ae4310b2b826535486e85990788";
+export const CONTRACT_ADDRESS2 = "0x851B100bbc8f494CfFbCb8C64c61040977300363";
 
 export const CONTRACT_ABI2 = [
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newAdmin",
-				"type": "address"
-			}
-		],
-		"name": "addAdmin",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "doctor",
-				"type": "address"
-			}
-		],
-		"name": "addDoctor",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
 	{
 		"inputs": [
 			{
@@ -91,30 +65,6 @@ export const CONTRACT_ABI2 = [
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "tokenURI",
-				"type": "string"
-			}
-		],
-		"name": "mintAsDoctor",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -143,11 +93,11 @@ export const CONTRACT_ABI2 = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "adminAddress",
+				"name": "newAdmin",
 				"type": "address"
 			}
 		],
-		"name": "removeAdmin",
+		"name": "addAdmin",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -160,7 +110,7 @@ export const CONTRACT_ABI2 = [
 				"type": "address"
 			}
 		],
-		"name": "removeDoctor",
+		"name": "addDoctor",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -204,6 +154,30 @@ export const CONTRACT_ABI2 = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "tokenURI",
+				"type": "string"
+			}
+		],
+		"name": "mintAsDoctor",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "nftContract",
 		"outputs": [
@@ -215,5 +189,31 @@ export const CONTRACT_ABI2 = [
 		],
 		"stateMutability": "view",
 		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "adminAddress",
+				"type": "address"
+			}
+		],
+		"name": "removeAdmin",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "doctor",
+				"type": "address"
+			}
+		],
+		"name": "removeDoctor",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	}
-]
+];

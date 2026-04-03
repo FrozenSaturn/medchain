@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google" 
+import { google } from "@ai-sdk/google"
 import { streamText, tool } from "ai"
 import { z } from "zod"
 
@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json()
 
   const result = streamText({
-    model: google("gemini-2.0-flash-latest"),
+    model: google("gemini-flash-latest"),
     messages,
     system: `You are Dr. AI, a specialized health analytics assistant. You help users understand their symptoms and health metrics with empathy and expertise.
 
