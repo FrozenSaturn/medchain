@@ -29,8 +29,16 @@ CREATE TABLE IF NOT EXISTS public.appointments (
   patientAge INTEGER,
   lastVisit TEXT,
   consultation_fee DECIMAL DEFAULT 0,
+  payment_status TEXT DEFAULT 'not_requested' CHECK (payment_status IN ('not_requested', 'pending', 'paid')),
+  payment_amount DECIMAL DEFAULT 0,
+  payment_tx_hash TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Ensure payment columns exist on appointments (no-op if table was just created with them above)
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'not_requested';
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS payment_amount DECIMAL DEFAULT 0;
+ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS payment_tx_hash TEXT;
 
 -- 3. Create Medical Records NFTs Table
 CREATE TABLE IF NOT EXISTS public.medical_records_nfts (
@@ -43,6 +51,46 @@ CREATE TABLE IF NOT EXISTS public.medical_records_nfts (
   token_uri TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 4. Patient-uploaded PDFs (extracted text + AI summary for Records tab and RAG chatbot)
+CREATE TABLE IF NOT EXISTS public.patient_uploaded_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  file_name TEXT NOT NULL,
+  file_size_bytes INTEGER,
+  mime_type TEXT NOT NULL DEFAULT 'application/pdf',
+  extracted_text TEXT,
+  ai_summary TEXT,
+  processing_status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (processing_status IN ('pending', 'processing', 'ready', 'error')),
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS patient_uploaded_records_patient_id_idx
+  ON public.patient_uploaded_records(patient_id);
+
+ALTER TABLE public.patient_uploaded_records ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS patient_uploaded_records_select_own ON public.patient_uploaded_records;
+DROP POLICY IF EXISTS patient_uploaded_records_insert_own ON public.patient_uploaded_records;
+DROP POLICY IF EXISTS patient_uploaded_records_update_own ON public.patient_uploaded_records;
+
+CREATE POLICY patient_uploaded_records_select_own
+  ON public.patient_uploaded_records FOR SELECT
+  USING (auth.uid() = patient_id);
+
+CREATE POLICY patient_uploaded_records_insert_own
+  ON public.patient_uploaded_records FOR INSERT
+  WITH CHECK (auth.uid() = patient_id);
+
+CREATE POLICY patient_uploaded_records_update_own
+  ON public.patient_uploaded_records FOR UPDATE
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
 
 -- Seed Data using the exact wallet addresses provided
 
@@ -57,13 +105,18 @@ ON CONFLICT (id) DO UPDATE SET
   full_name = EXCLUDED.full_name;
 
 -- Insert Appointments for the Patient ('33333333-3333-3333-3333-333333333333')
-INSERT INTO public.appointments (id, patient_id, doctor_id, appointment_date, reason, symptoms, status, time, patientAge, lastVisit, consultation_fee) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-04-10', 'Regular checkup', 'Mild chest discomfort', 'booked', '10:00 AM', 45, '2023-12-15', 100),
-('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-04-12', 'Follow-up consultation', 'Palpitations, anxiety', 'awaiting_diagnosis', '11:00 AM', 45, '2026-04-10', 150),
-('cccccccc-cccc-cccc-cccc-cccccccccccc', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-04-15', 'Cardiology Consult', 'Mild shortness of breath upon exertion', 'completed', '02:00 PM', 45, '2026-04-12', 200)
+INSERT INTO public.appointments (id, patient_id, doctor_id, appointment_date, reason, symptoms, status, time, patientAge, lastVisit, consultation_fee, payment_status, payment_amount, payment_tx_hash) VALUES
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-04-10', 'Regular checkup', 'Mild chest discomfort', 'booked', '10:00 AM', 45, '2023-12-15', 100, 'not_requested', 0, NULL),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-04-12', 'Follow-up consultation', 'Palpitations, anxiety', 'awaiting_diagnosis', '11:00 AM', 45, '2026-04-10', 150, 'pending', 150, NULL),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-04-15', 'Cardiology Consult', 'Mild shortness of breath upon exertion', 'completed', '02:00 PM', 45, '2026-04-12', 200, 'paid', 200, '0xdemo1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Medical Records NFTs (Simulating completed treatments by the Doctor for the Patient)
 INSERT INTO public.medical_records_nfts (id, appointment_id, patient_wallet_address, doctor_wallet_address, diagnosis, treatment, token_uri) VALUES
 ('11111111-2222-3333-4444-555555555555', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '0xE5317C21F8c0317c2526daaA2365bCDd39447262', '0xFFA39530704610587Ef9a1a0e15E9C641504c3D4', 'Stable angina pectoris confirmed via ECG.', 'Prescribed 0.4mg nitroglycerin tablets sublingually PRN. Recommended mild exercise and low-sodium diet.', 'ipfs://QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG')
 ON CONFLICT (id) DO NOTHING;
+
+-- Align demo payment state for seed appointment rows (idempotent if INSERT ran)
+UPDATE public.appointments SET payment_status = 'not_requested', payment_amount = 0, payment_tx_hash = NULL WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+UPDATE public.appointments SET payment_status = 'pending', payment_amount = 150, payment_tx_hash = NULL WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+UPDATE public.appointments SET payment_status = 'paid', payment_amount = 200, payment_tx_hash = '0xdemo1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b' WHERE id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';

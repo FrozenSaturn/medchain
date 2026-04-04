@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   FileText,
@@ -7,50 +7,118 @@ import {
   Search,
   CreditCard,
   Award,
-  Link,
-  Stethoscope,
-  Shield,
+  Loader2,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PatientProfile from "../../../components-for-dash/patient/PatientProfile";
 import DoctorSearch from "../../../components-for-dash/patient/DoctorSearch";
 import AppointmentStatus from "../../../components-for-dash/patient/AppointmentStatus";
 import TreatmentPayment from "../../../components-for-dash/patient/TreatmentPayment";
 import NFTViewer from "../../../components-for-dash/patient/NFTViewer";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import MedicalRecordUpload from "@/components-for-dash/patient/MedicalRecordUpload";
+import { createClient } from "@/lib/supabase/client";
 
 const PatientDashboard = () => {
-  const router = useRouter();
   const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState("profile");
+  const supabase = createClient();
 
-  // Determine the active tab from the path
-  let initialTab = "profile";
-  if (pathname.endsWith("/appointment")) initialTab = "appointments";
-  else if (pathname.endsWith("/records")) initialTab = "records";
-  else if (pathname.endsWith("/payments")) initialTab = "payments";
-  else if (pathname.endsWith("/nfts")) initialTab = "nfts";
-  // Add more if you want to support other tabs as routes
-
-  // Handle tab change without navigation
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
+  const getInitialTab = () => {
+    if (pathname.endsWith("/appointment")) return "appointments";
+    if (pathname.endsWith("/records")) return "records";
+    if (pathname.endsWith("/payments")) return "payments";
+    if (pathname.endsWith("/nfts")) return "nfts";
+    return "profile";
   };
 
-  // TODO: Fetch patient data from Supabase
-  const patientData = {
-    name: "John Doe",
-    email: "john.doe@email.com",
-    appointments: 3,
-    records: 5,
-    pendingPayments: 2,
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [patientName, setPatientName] = useState("Patient");
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [appointmentCount, setAppointmentCount] = useState(0);
+  const [recordCount, setRecordCount] = useState(0);
+  const [pendingPayments, setPendingPayments] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const refreshCounts = async (uid: string, wallet: string | null) => {
+    const { count: aptCount } = await supabase
+      .from("appointments")
+      .select("*", { count: "exact", head: true })
+      .eq("patient_id", uid);
+    setAppointmentCount(aptCount || 0);
+
+    if (wallet) {
+      const { count: recCount } = await supabase
+        .from("medical_records_nfts")
+        .select("*", { count: "exact", head: true })
+        .eq("patient_wallet_address", wallet);
+      setRecordCount(recCount || 0);
+    }
+
+    try {
+      const { count: payCount } = await supabase
+        .from("appointments")
+        .select("*", { count: "exact", head: true })
+        .eq("patient_id", uid)
+        .eq("payment_status", "pending");
+      setPendingPayments(payCount || 0);
+    } catch {
+      setPendingPayments(0);
+    }
   };
+
+  useEffect(() => {
+    const loadPatientData = async () => {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+        if (authError || !user) {
+          setLoading(false);
+          return;
+        }
+
+        setUserId(user.id);
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, walletAddress")
+          .eq("id", user.id)
+          .single();
+
+        const name = profile?.full_name || "Patient";
+        const wallet = profile?.walletAddress || null;
+        setPatientName(name);
+        setWalletAddress(wallet);
+
+        await refreshCounts(user.id, wallet);
+      } catch (err) {
+        console.error("Error loading patient data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPatientData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-[#388E3C]" />
+          <p className="text-[#FAFAFA]/70 font-sf-pro-regular">
+            Loading dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-sf-pro-bold text-[#FAFAFA] mb-2">
@@ -59,7 +127,7 @@ const PatientDashboard = () => {
           <p className="text-[#FAFAFA]/70 font-sf-pro-regular">
             Welcome back,{" "}
             <span className="text-[#388E3C] font-sf-pro-semibold">
-              {patientData.name}
+              {patientName}
             </span>
           </p>
         </div>
@@ -69,7 +137,7 @@ const PatientDashboard = () => {
               <div className="flex items-center space-x-2">
                 <Calendar className="h-5 w-5 text-[#388E3C]" />
                 <span className="text-sm font-sf-pro-medium text-[#FAFAFA]">
-                  {patientData.appointments} Appointments
+                  {appointmentCount} Appointments
                 </span>
               </div>
             </CardContent>
@@ -77,10 +145,9 @@ const PatientDashboard = () => {
         </div>
       </div>
 
-      {/* Tabs Section */}
       <Tabs
         value={activeTab}
-        onValueChange={handleTabChange}
+        onValueChange={setActiveTab}
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-6 bg-black/50 border border-[#388E3C]/20 backdrop-blur-sm">
@@ -129,23 +196,29 @@ const PatientDashboard = () => {
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
-          <PatientProfile setActiveTab={() => {}} />
+          <PatientProfile
+            setActiveTab={setActiveTab}
+            patientName={patientName}
+            appointmentCount={appointmentCount}
+            recordCount={recordCount}
+            pendingPayments={pendingPayments}
+          />
         </TabsContent>
 
         <TabsContent value="search" className="mt-6">
-          <DoctorSearch />
+          <DoctorSearch userId={userId} />
         </TabsContent>
 
         <TabsContent value="appointments" className="mt-6">
-          <AppointmentStatus />
+          <AppointmentStatus userId={userId} />
         </TabsContent>
 
         <TabsContent value="records" className="mt-6">
-          <MedicalRecordUpload />
+          <MedicalRecordUpload userId={userId} walletAddress={walletAddress} />
         </TabsContent>
 
         <TabsContent value="payments" className="mt-6">
-          <TreatmentPayment />
+          <TreatmentPayment userId={userId} />
         </TabsContent>
 
         <TabsContent value="nfts" className="mt-6">

@@ -1,14 +1,8 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Search,
@@ -18,15 +12,71 @@ import {
   Stethoscope,
   Phone,
   Mail,
+  Loader2,
 } from "lucide-react";
 import BookAppointmentModal from "./BookAppointmentModal";
+import { createClient } from "@/lib/supabase/client";
+import { doctorSpecialtyFromProfile } from "@/lib/doctor-profile";
 
-const DoctorSearch = () => {
+interface DoctorDisplay {
+  id: string;
+  name: string;
+  specialty: string;
+  rating: number;
+  reviews: number;
+  location: string;
+  availability: string;
+  phone: string;
+  email: string;
+  dbId?: string;
+  consultationFee?: number;
+}
+
+const HARDCODED_DOCTORS: DoctorDisplay[] = [
+  {
+    id: "hc-1",
+    name: "Dr. Sarah Johnson",
+    specialty: "Cardiology",
+    rating: 4.9,
+    reviews: 127,
+    location: "Downtown Medical Center",
+    availability: "Mon-Fri, 9AM-5PM",
+    phone: "+1 (555) 123-4567",
+    email: "sarah.johnson@healthcare.com",
+  },
+  {
+    id: "hc-2",
+    name: "Dr. Michael Chen",
+    specialty: "Dermatology",
+    rating: 4.8,
+    reviews: 89,
+    location: "Westside Clinic",
+    availability: "Tue-Sat, 10AM-6PM",
+    phone: "+1 (555) 234-5678",
+    email: "michael.chen@healthcare.com",
+  },
+  {
+    id: "hc-3",
+    name: "Dr. Emily Rodriguez",
+    specialty: "Pediatrics",
+    rating: 4.7,
+    reviews: 156,
+    location: "Children's Hospital",
+    availability: "Mon-Thu, 8AM-4PM",
+    phone: "+1 (555) 345-6789",
+    email: "emily.rodriguez@healthcare.com",
+  },
+];
+
+const DoctorSearch = ({ userId }: { userId: string | null }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorDisplay | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [dbDoctors, setDbDoctors] = useState<DoctorDisplay[]>([]);
+  const [loadingDb, setLoadingDb] = useState(true);
+
+  const supabase = createClient();
 
   const specialties = [
     "All Specialties",
@@ -39,68 +89,69 @@ const DoctorSearch = () => {
     "Oncology",
   ];
 
-  const locations = [
-    "New York, NY",
-    "Los Angeles, CA",
-    "Miami, FL",
-    "Chicago, IL",
-    "Houston, TX",
-  ];
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("role", "doctor")
+          .order("full_name", { ascending: true });
 
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      specialty: "Cardiology",
-      rating: 4.9,
-      reviews: 127,
-      location: "Downtown Medical Center",
-      availability: "Mon-Fri, 9AM-5PM",
-      phone: "+1 (555) 123-4567",
-      email: "sarah.johnson@healthcare.com",
-      image: "/placeholder-user.jpg",
-    },
-    {
-      id: 2,
-      name: "Dr. Michael Chen",
-      specialty: "Dermatology",
-      rating: 4.8,
-      reviews: 89,
-      location: "Westside Clinic",
-      availability: "Tue-Sat, 10AM-6PM",
-      phone: "+1 (555) 234-5678",
-      email: "michael.chen@healthcare.com",
-      image: "/placeholder-user.jpg",
-    },
-    {
-      id: 3,
-      name: "Dr. Emily Rodriguez",
-      specialty: "Pediatrics",
-      rating: 4.7,
-      reviews: 156,
-      location: "Children's Hospital",
-      availability: "Mon-Thu, 8AM-4PM",
-      phone: "+1 (555) 345-6789",
-      email: "emily.rodriguez@healthcare.com",
-      image: "/placeholder-user.jpg",
-    },
-  ];
+        if (error) {
+          console.error("Error fetching doctors:", error);
+          return;
+        }
 
-  const handleBookAppointment = (doctor: any) => {
+        const rows = (data || []) as Record<string, unknown>[];
+        const mapped: DoctorDisplay[] = rows.map((doc) => {
+          const id = String(doc.id ?? "");
+          const fee = doc.consultation_fee;
+          const consultationFee =
+            typeof fee === "number" ? fee : fee != null ? Number(fee) : undefined;
+          return {
+            id: `db-${id}`,
+            name: (doc.full_name as string) || "Doctor",
+            specialty: doctorSpecialtyFromProfile({
+              specialization: doc.specialization as string | null | undefined,
+              bio: doc.bio as string | null | undefined,
+            }),
+            rating: 4.5,
+            reviews: 0,
+            location: "MedChain Healthcare",
+            availability: "Available for booking",
+            phone: "Via MedChain",
+            email: "Via MedChain",
+            dbId: id,
+            consultationFee: Number.isFinite(consultationFee)
+              ? consultationFee
+              : undefined,
+          };
+        });
+        setDbDoctors(mapped);
+      } catch (err) {
+        console.error("Error fetching doctors:", err);
+      } finally {
+        setLoadingDb(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  const allDoctors = [...dbDoctors, ...HARDCODED_DOCTORS];
+
+  const handleBookAppointment = (doctor: DoctorDisplay) => {
     setSelectedDoctor(doctor);
     setIsBookingModalOpen(true);
   };
 
-  const filteredDoctors = doctors.filter((doctor) => {
+  const filteredDoctors = allDoctors.filter((doctor) => {
     const matchesSearch =
       doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSpecialty =
       selectedSpecialty === "all" || doctor.specialty === selectedSpecialty;
-    const matchesLocation =
-      !selectedLocation || doctor.location === selectedLocation;
-
-    return matchesSearch && matchesSpecialty && matchesLocation;
+    return matchesSearch && matchesSpecialty;
   });
 
   return (
@@ -140,6 +191,15 @@ const DoctorSearch = () => {
         </CardContent>
       </Card>
 
+      {loadingDb && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-[#388E3C] mr-2" />
+          <span className="text-[#FAFAFA]/70 font-sf-pro-regular">
+            Loading doctors from database...
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredDoctors.map((doctor) => (
           <Card
@@ -160,6 +220,11 @@ const DoctorSearch = () => {
                   </p>
                 </div>
               </div>
+              {doctor.dbId && (
+                <Badge className="w-fit mt-2 bg-[#388E3C]/20 text-[#388E3C] border-[#388E3C]/30 text-xs">
+                  Verified on MedChain
+                </Badge>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
@@ -183,6 +248,15 @@ const DoctorSearch = () => {
                 <Calendar className="h-4 w-4 text-[#388E3C]" />
                 <span>{doctor.availability}</span>
               </div>
+
+              {doctor.consultationFee != null && (
+                <div className="text-sm text-[#FAFAFA]/80 font-sf-pro-regular">
+                  Consultation Fee:{" "}
+                  <span className="text-[#388E3C] font-sf-pro-semibold">
+                    ${doctor.consultationFee}
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <div className="flex items-center space-x-2 text-[#FAFAFA]/80 font-sf-pro-regular">
@@ -214,7 +288,7 @@ const DoctorSearch = () => {
         ))}
       </div>
 
-      {filteredDoctors.length === 0 && (
+      {filteredDoctors.length === 0 && !loadingDb && (
         <Card className="bg-[#388E3C]/10 border-[#388E3C]/20 backdrop-blur-sm">
           <CardContent className="p-8 text-center">
             <Search className="h-12 w-12 text-[#388E3C] mx-auto mb-4" />
@@ -232,6 +306,7 @@ const DoctorSearch = () => {
         doctor={selectedDoctor}
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
+        userId={userId}
       />
     </div>
   );

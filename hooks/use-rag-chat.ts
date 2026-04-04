@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
@@ -31,6 +32,15 @@ export const useRAGChat = () => {
     setIsLoading(true);
 
     try {
+      let resolvedUserId = userId;
+      if (resolvedUserId === undefined) {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        resolvedUserId = session?.user?.id;
+      }
+
       const response = await fetch("/api/rag-chat", {
         method: "POST",
         headers: {
@@ -39,14 +49,22 @@ export const useRAGChat = () => {
         body: JSON.stringify({
           message,
           history: messages,
-          userId,
+          userId: resolvedUserId,
         }),
       });
 
       const data: ChatResponse = await response.json();
 
-      if (data.error) {
-        throw new Error(data.content);
+      if (!response.ok || data.error) {
+        const errorMessage: Message = {
+          role: "assistant",
+          content:
+            data.content?.trim() ||
+            "Sorry, I encountered an error. Please try again.",
+          timestamp: data.timestamp || new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        return data;
       }
 
       const assistantMessage: Message = {

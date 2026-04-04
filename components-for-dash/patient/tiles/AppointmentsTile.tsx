@@ -4,11 +4,12 @@ import { Calendar, Clock, User, CheckCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { doctorSpecialtyFromProfile } from "@/lib/doctor-profile";
 
 interface Doctor {
   id: string;
   full_name: string;
-  specialization: string;
+  specialtyLabel: string;
 }
 
 interface Appointment {
@@ -36,16 +37,25 @@ const AppointmentsTile = ({
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, specialization")
+        .select("*")
         .eq("role", "doctor")
-        .not("full_name", "is", null)
-        .not("specialization", "is", null);
+        .not("full_name", "is", null);
 
       if (error) {
         throw new Error("Failed to fetch doctors");
       }
 
-      setDoctors(data || []);
+      const rows = (data || []) as Record<string, unknown>[];
+      setDoctors(
+        rows.map((row) => ({
+          id: String(row.id),
+          full_name: String(row.full_name),
+          specialtyLabel: doctorSpecialtyFromProfile({
+            specialization: row.specialization as string | null | undefined,
+            bio: row.bio as string | null | undefined,
+          }),
+        }))
+      );
     } catch (error) {
       console.error("Error fetching doctors:", error);
       setError("Failed to load doctors");
@@ -75,7 +85,7 @@ const AppointmentsTile = ({
       return {
         id: index + 1,
         doctor: doctor.full_name,
-        specialty: doctor.specialization,
+        specialty: doctor.specialtyLabel,
         date: data.date,
         time: data.time,
         status: data.status,

@@ -79,6 +79,7 @@
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.177.0",
     "three-globe": "^2.42.11",
+    "unpdf": "^1.4.0",
     "use-sync-external-store": "latest",
     "vaul": "^1.1.1",
     "viem": "^2.31.3",

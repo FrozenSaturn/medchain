@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,11 @@ const RAGChatbot = () => {
     setIsLoading(true);
 
     try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch("/api/rag-chat", {
         method: "POST",
         headers: {
@@ -58,14 +64,22 @@ const RAGChatbot = () => {
         body: JSON.stringify({
           message: inputMessage,
           history: messages,
-          userId: "current-user", // You can pass actual user ID here
+          userId: session?.user?.id,
         }),
       });
 
       const data: ChatResponse = await response.json();
 
-      if (data.error) {
-        throw new Error(data.content);
+      if (!response.ok || data.error) {
+        const errorMessage: Message = {
+          role: "assistant",
+          content:
+            data.content?.trim() ||
+            "Sorry, I encountered an error. Please try again.",
+          timestamp: data.timestamp || new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        return;
       }
 
       const assistantMessage: Message = {
