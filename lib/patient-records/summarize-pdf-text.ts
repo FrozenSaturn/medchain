@@ -1,9 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
+import {
+  DEFAULT_GEMINI_TEXT_MODEL,
+  resolveGeminiRecordSummaryModel,
+} from "@/lib/gemini-default-model";
 
 const MAX_INPUT_CHARS = 48_000;
-
-/** Gemma on Gemini API; override with GEMINI_RECORD_SUMMARY_MODEL (e.g. gemma-3-1b-it). */
-const DEFAULT_SUMMARY_MODEL = "gemma-3-1b-it";
 
 export async function summarizeMedicalPdfText(extractedText: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -21,8 +22,7 @@ export async function summarizeMedicalPdfText(extractedText: string): Promise<st
       ? `${trimmed.slice(0, MAX_INPUT_CHARS)}\n\n[…truncated for model context]`
       : trimmed;
 
-  const model =
-    process.env.GEMINI_RECORD_SUMMARY_MODEL?.trim() || DEFAULT_SUMMARY_MODEL;
+  const model = resolveGeminiRecordSummaryModel();
 
   const genAI = new GoogleGenAI({ apiKey });
 
@@ -58,10 +58,10 @@ ${body}
   try {
     return await run(model);
   } catch (first) {
-    const fallback = "gemini-2.0-flash";
+    const fallback = DEFAULT_GEMINI_TEXT_MODEL;
     if (model === fallback) throw first;
     console.warn(
-      `Gemma summary model "${model}" failed, retrying with ${fallback}:`,
+      `PDF summary model "${model}" failed, retrying with ${fallback}:`,
       first
     );
     return await run(fallback);

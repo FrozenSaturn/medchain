@@ -1,16 +1,14 @@
 import { google } from "@ai-sdk/google"
 import { streamText, tool } from "ai"
 import { z } from "zod"
+import {
+  modelSupportsDeveloperInstruction,
+  resolveGeminiTextModel,
+} from "@/lib/gemini-default-model"
 
 export const maxDuration = 30
 
-export async function POST(req: Request) {
-  const { messages } = await req.json()
-
-  const result = streamText({
-    model: google("gemini-flash-latest"),
-    messages,
-    system: `You are Dr. AI, a specialized health analytics assistant. You help users understand their symptoms and health metrics with empathy and expertise.
+const DR_AI_SYSTEM = `You are Dr. AI, a specialized health analytics assistant. You help users understand their symptoms and health metrics with empathy and expertise.
 
 Key capabilities:
 - Analyze symptoms and provide insights
@@ -19,7 +17,41 @@ Key capabilities:
 - Provide health recommendations
 - Update health analytics based on user input
 
-Always be supportive, accurate, and remind users to consult healthcare professionals for serious concerns.`,
+Always be supportive, accurate, and remind users to consult healthcare professionals for serious concerns.`
+
+function injectSystemIntoFirstUserMessage(
+  messages: unknown[],
+  systemText: string
+): unknown[] {
+  if (!Array.isArray(messages)) return messages
+  const copy = messages.map((m) =>
+    m !== null && typeof m === "object" ? { ...(m as object) } : m
+  ) as Record<string, unknown>[]
+  const idx = copy.findIndex((m) => m?.role === "user")
+  if (idx === -1) {
+    return [{ role: "user", content: systemText }, ...copy]
+  }
+  const first = copy[idx]
+  const content = first.content
+  if (typeof content === "string") {
+    first.content = `${systemText}\n\n---\n\n${content}`
+  }
+  return copy
+}
+
+export async function POST(req: Request) {
+  const { messages } = await req.json()
+
+  const modelId = resolveGeminiTextModel()
+  const useSystemInstruction = modelSupportsDeveloperInstruction(modelId)
+  const streamMessages = useSystemInstruction
+    ? messages
+    : injectSystemIntoFirstUserMessage(messages, DR_AI_SYSTEM)
+
+  const result = streamText({
+    model: google(modelId),
+    messages: streamMessages,
+    system: useSystemInstruction ? DR_AI_SYSTEM : undefined,
     tools: {
       analyzeSymptoms: tool({
         description: "Analyze user symptoms and provide health insights",

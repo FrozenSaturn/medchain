@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { resolveGeminiTextModel } from "@/lib/gemini-default-model";
 
 // Initialize the Gemini AI client
 // In production, use environment variables for the API key
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
 
     // Create a chat session with Gemini
     const chat = genAI.chats.create({
-      model: "gemini-2.0-flash",
+      model: resolveGeminiTextModel(),
       history: history.map((msg: any) => ({
         role: msg.role === "user" ? "user" : "model",
         parts: [{ text: msg.content }],

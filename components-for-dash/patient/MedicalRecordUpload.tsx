@@ -262,8 +262,9 @@ const MedicalRecordUpload = ({
           <p className="text-sm text-[#FAFAFA]/60">
             Text is extracted with{" "}
             <span className="text-[#FAFAFA]/80">unpdf</span> (open-source PDF.js).
-            A <span className="text-[#FAFAFA]/80">Gemma</span> model summarizes
-            it via the Gemini API (falls back to gemini-2.0-flash if needed).
+            A hosted <span className="text-[#FAFAFA]/80">Gemma</span> model summarizes
+            it (default gemma-3-1b-it; override with GEMINI_RECORD_SUMMARY_MODEL). Chat
+            uses Gemma 4 by default (gemma-4-31b-it; GEMINI_CHAT_MODEL).
             Summaries are stored for this account and used by the AI assistant.
           </p>
         </CardHeader>
