@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { User, Calendar, FileText, History } from "lucide-react";
+import { User, Calendar, FileText, History, CreditCard } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DoctorProfile from "../doctor/DoctorProfile";
 import AppointmentQueue from "../doctor/AppointmentQueue";
 import { DiagnosisSubmission } from "../doctor/DiagnosisSubmission";
+import { DoctorPaymentTab } from "../doctor/DoctorPaymentTab";
 
 const DoctorDashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -25,7 +26,7 @@ const DoctorDashboard = () => {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-4 bg-secondary/50">
+        <TabsList className="grid w-full grid-cols-5 bg-secondary/50">
           <TabsTrigger value="profile" className="flex items-center space-x-2">
             <User className="h-4 w-4" />
             <span>Profile</span>
@@ -40,6 +41,10 @@ const DoctorDashboard = () => {
           >
             <FileText className="h-4 w-4" />
             <span>Submit Diagnosis</span>
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center space-x-2">
+            <CreditCard className="h-4 w-4" />
+            <span>Payments</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center space-x-2">
             <History className="h-4 w-4" />
@@ -57,6 +62,10 @@ const DoctorDashboard = () => {
 
         <TabsContent value="diagnosis">
           <DiagnosisSubmission />
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <DoctorPaymentTab />
         </TabsContent>
 
         <TabsContent value="history">

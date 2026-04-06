@@ -9,7 +9,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   bio TEXT,
   avatar_url TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  role TEXT CHECK (role IN ('patient', 'doctor', 'admin'))
+  role TEXT CHECK (role IN ('patient', 'doctor', 'admin')),
+  verified BOOLEAN NOT NULL DEFAULT true,
+  specialization TEXT,
+  consultation_fee DECIMAL,
+  doctor_verification_pending BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Note: In a production Supabase setup, 'profiles' id usually references auth.users(id). 
@@ -95,14 +99,16 @@ CREATE POLICY patient_uploaded_records_update_own
 -- Seed Data using the exact wallet addresses provided
 
 -- Insert Profiles (Using fixed UUIDs so relations work seamlessly)
-INSERT INTO public.profiles (id, full_name, "walletAddress", bio, role, avatar_url) VALUES
-('11111111-1111-1111-1111-111111111111', 'Admin Supervisor', '0x2F3755831ce31382b9c79dab5318cd5E1bedB5B3', 'Hospital Administrator', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'),
-('22222222-2222-2222-2222-222222222222', 'Dr. Emily Chen', '0xFFA39530704610587Ef9a1a0e15E9C641504c3D4', 'Senior Cardiologist with 10 years of experience.', 'doctor', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Doctor'),
-('33333333-3333-3333-3333-333333333333', 'John Doe', '0xE5317C21F8c0317c2526daaA2365bCDd39447262', 'Regular patient, history of mild hypertension.', 'patient', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Patient')
+INSERT INTO public.profiles (id, full_name, "walletAddress", bio, role, avatar_url, verified, doctor_verification_pending) VALUES
+('11111111-1111-1111-1111-111111111111', 'Admin Supervisor', '0x2F3755831ce31382b9c79dab5318cd5E1bedB5B3', 'Hospital Administrator', 'admin', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin', true, false),
+('22222222-2222-2222-2222-222222222222', 'Dr. Emily Chen', '0xFFA39530704610587Ef9a1a0e15E9C641504c3D4', 'Senior Cardiologist with 10 years of experience.', 'doctor', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Doctor', true, false),
+('33333333-3333-3333-3333-333333333333', 'John Doe', '0xE5317C21F8c0317c2526daaA2365bCDd39447262', 'Regular patient, history of mild hypertension.', 'patient', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Patient', true, false)
 ON CONFLICT (id) DO UPDATE SET 
   "walletAddress" = EXCLUDED."walletAddress", 
   role = EXCLUDED.role,
-  full_name = EXCLUDED.full_name;
+  full_name = EXCLUDED.full_name,
+  verified = COALESCE(EXCLUDED.verified, public.profiles.verified),
+  doctor_verification_pending = COALESCE(EXCLUDED.doctor_verification_pending, public.profiles.doctor_verification_pending);
 
 -- Insert Appointments for the Patient ('33333333-3333-3333-3333-333333333333')
 INSERT INTO public.appointments (id, patient_id, doctor_id, appointment_date, reason, symptoms, status, time, patientAge, lastVisit, consultation_fee, payment_status, payment_amount, payment_tx_hash) VALUES

@@ -43,16 +43,16 @@ BEGIN
   TRUNCATE TABLE public.patient_uploaded_records RESTART IDENTITY;
   TRUNCATE TABLE public.profiles RESTART IDENTITY;
 
-  INSERT INTO public.profiles (id, full_name, "walletAddress", bio, role, avatar_url) VALUES
+  INSERT INTO public.profiles (id, full_name, "walletAddress", bio, role, avatar_url, verified, doctor_verification_pending) VALUES
     (v_admin, 'Admin Supervisor', '0x2F3755831ce31382b9c79dab5318cd5E1bedB5B3',
      'Hospital Administrator', 'admin',
-     'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'),
+     'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin', true, false),
     (v_doctor, 'Dr. Adhisree Paul', '0xFFA39530704610587Ef9a1a0e15E9C641504c3D4',
      'Senior Cardiologist with 10 years of experience.', 'doctor',
-     'https://api.dicebear.com/7.x/avataaars/svg?seed=Doctor'),
+     'https://api.dicebear.com/7.x/avataaars/svg?seed=Doctor', true, false),
     (v_patient, 'Arya Bhattacharjee', '0xE5317C21F8c0317c2526daaA2365bCDd39447262',
      'Regular patient, history of mild hypertension.', 'patient',
-     'https://api.dicebear.com/7.x/avataaars/svg?seed=Patient');
+     'https://api.dicebear.com/7.x/avataaars/svg?seed=Patient', true, false);
 
   INSERT INTO public.appointments (
     id, patient_id, doctor_id, appointment_date, reason, symptoms, status, time,

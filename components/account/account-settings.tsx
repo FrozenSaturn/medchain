@@ -25,6 +25,47 @@ interface UserProfile {
   role: string;
 }
 
+function messageFromUnknown(e: unknown): string {
+  if (typeof e === "string") return e;
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === "object" && "message" in e) {
+    const m = (e as { message: unknown }).message;
+    if (typeof m === "string" && m.length) return m;
+  }
+  if (e && typeof e === "object" && "error_description" in e) {
+    const m = (e as { error_description: unknown }).error_description;
+    if (typeof m === "string") return m;
+  }
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return "Unknown error";
+  }
+}
+
+function hintForProfileError(msg: string): string | null {
+  const m = msg.toLowerCase();
+  if (
+    m.includes("doctor_verification_pending") ||
+    m.includes("specialization") ||
+    m.includes("consultation_fee") ||
+    m.includes("verified") ||
+    m.includes("schema cache") ||
+    m.includes("could not find") ||
+    (m.includes("column") && m.includes("does not exist"))
+  ) {
+    return "Run supabase_profiles_role_verification.sql in the Supabase SQL Editor (adds verification columns).";
+  }
+  if (
+    m.includes("row-level security") ||
+    m.includes("rls") ||
+    m.includes("policy") ||
+    m.includes("permission denied")
+  ) {
+    return "Supabase rejected the write (RLS). Add an UPDATE policy on public.profiles for auth.uid() = id, or disable RLS on profiles for development.";
+  }
+  return null;
+}
 
 export function AccountSettings({ user }: { user: User | null }) {
   const [activeTab, setActiveTab] = useState("profile");
@@ -43,8 +84,12 @@ export function AccountSettings({ user }: { user: User | null }) {
   const [avatar, setAvatarUrl] = useState("/placeholder.svg");
   const [wallet, setWallet] = useState("");
   const [role, setRole] = useState<string>("patient");
-  
-  
+  const [doctorVerificationPending, setDoctorVerificationPending] =
+    useState(false);
+  const [doctorSpecialization, setDoctorSpecialization] = useState("");
+  const [doctorConsultationFee, setDoctorConsultationFee] = useState("");
+  const [doctorApplyLoading, setDoctorApplyLoading] = useState(false);
+
   // Error and success states
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -75,7 +120,10 @@ export function AccountSettings({ user }: { user: User | null }) {
       setLoading(true);
       const { data, error, status } = await supabase
         .from("profiles")
-        .select(`full_name, walletAddress, bio, avatar_url, updated_at, role`)
+        .select(
+          `full_name, walletAddress, bio, avatar_url, updated_at, role,
+           doctor_verification_pending, specialization, consultation_fee`
+        )
         .eq("id", user.id)
         .single();
         
@@ -90,6 +138,20 @@ export function AccountSettings({ user }: { user: User | null }) {
         setBio(data.bio || "Hi There from V4");
         setAvatarUrl(data.avatar_url || user?.user_metadata?.avatar_url || "/placeholder.svg");
         setRole(data.role || "patient");
+        setDoctorVerificationPending(
+          Boolean(
+            (data as { doctor_verification_pending?: boolean })
+              .doctor_verification_pending
+          )
+        );
+        setDoctorSpecialization(
+          (data as { specialization?: string | null }).specialization || ""
+        );
+        const cf = (data as { consultation_fee?: number | null })
+          .consultation_fee;
+        setDoctorConsultationFee(
+          cf != null && !Number.isNaN(Number(cf)) ? String(cf) : ""
+        );
       } else {
         // If no data, use Google avatar if available
         setAvatarUrl(user?.user_metadata?.avatar_url || "/placeholder.svg");
@@ -106,6 +168,75 @@ export function AccountSettings({ user }: { user: User | null }) {
   useEffect(() => {
     getProfile();
   }, [user, getProfile]);
+
+  const submitDoctorVerificationRequest = async () => {
+    if (!user?.id) return;
+    if (role !== "patient") {
+      showMessage("Only patients can submit a new doctor application.", true);
+      return;
+    }
+    const w = (walletAddress || wallet).trim();
+    if (!w) {
+      showMessage(
+        "Connect your wallet and tap “Use This Wallet” so admins can approve you on-chain.",
+        true
+      );
+      return;
+    }
+    const feeNum = parseFloat(doctorConsultationFee);
+    setDoctorApplyLoading(true);
+    try {
+      // Upsert so a missing profiles row (never clicked Save) still works; plain
+      // .update() returns no error when 0 rows match, which is easy to misread.
+      const payload = {
+        id: user.id,
+        full_name: fullname,
+        walletAddress: w,
+        bio,
+        avatar_url: user?.user_metadata?.avatar_url || avatar,
+        role: "patient" as const,
+        doctor_verification_pending: true,
+        specialization: doctorSpecialization.trim() || null,
+        consultation_fee:
+          Number.isFinite(feeNum) && feeNum >= 0 ? feeNum : null,
+        verified: true,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .upsert([payload], { onConflict: "id" })
+        .select("id")
+        .maybeSingle();
+
+      if (error) {
+        const msg = messageFromUnknown(error);
+        const hint = hintForProfileError(msg);
+        showMessage(hint ? `${msg} — ${hint}` : msg, true);
+        return;
+      }
+
+      if (!data?.id) {
+        showMessage(
+          "Could not save your profile row. Check Supabase logs and that table public.profiles exists.",
+          true
+        );
+        return;
+      }
+
+      setDoctorVerificationPending(true);
+      showMessage(
+        "Application submitted. An admin will review it under Admin → Roles."
+      );
+      await getProfile();
+    } catch (e: unknown) {
+      const msg = messageFromUnknown(e);
+      const hint = hintForProfileError(msg);
+      showMessage(hint ? `${msg} — ${hint}` : msg, true);
+    } finally {
+      setDoctorApplyLoading(false);
+    }
+  };
 
   const updateProfile = async (profileData: Partial<UserProfile>) => {
     if (!user?.id) return;
@@ -329,7 +460,66 @@ export function AccountSettings({ user }: { user: User | null }) {
                       <option value="doctor">Doctor</option>
                       <option value="admin">Admin</option>
                     </select>
+                    <p className="text-xs text-muted-foreground">
+                      Becoming a doctor through the app: use the application
+                      below instead of setting role to Doctor yourself.
+                    </p>
                   </div>
+
+                  {role === "patient" && (
+                    <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        <span className="font-medium">
+                          Apply for doctor verification
+                        </span>
+                      </div>
+                      {doctorVerificationPending ? (
+                        <p className="text-sm text-muted-foreground">
+                          Your application is pending admin review. You will
+                          appear in the admin Role Verification panel.
+                        </p>
+                      ) : (
+                        <>
+                          <div className="grid gap-2">
+                            <Label htmlFor="doc-spec">Specialization</Label>
+                            <Input
+                              id="doc-spec"
+                              value={doctorSpecialization}
+                              onChange={(e) =>
+                                setDoctorSpecialization(e.target.value)
+                              }
+                              placeholder="e.g. Cardiology"
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="doc-fee">Consultation fee (USD)</Label>
+                            <Input
+                              id="doc-fee"
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={doctorConsultationFee}
+                              onChange={(e) =>
+                                setDoctorConsultationFee(e.target.value)
+                              }
+                              placeholder="150"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={doctorApplyLoading}
+                            onClick={submitDoctorVerificationRequest}
+                          >
+                            {doctorApplyLoading
+                              ? "Submitting…"
+                              : "Submit doctor verification request"}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   <Button
                     className="w-fit"

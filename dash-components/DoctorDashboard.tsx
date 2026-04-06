@@ -1,25 +1,23 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { User, Calendar, FileText, History } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { User, Calendar, FileText, CreditCard } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DoctorProfile from "../components-for-dash/doctor/DoctorProfile";
 import AppointmentQueue from "../components-for-dash/doctor/AppointmentQueue";
 import { DiagnosisSubmission } from "../components-for-dash/doctor/DiagnosisSubmission";
+import { DoctorPaymentTab } from "../components-for-dash/doctor/DoctorPaymentTab";
 
 const DoctorDashboard = () => {
-  const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("profile");
 
-  // Determine the active tab from the path
-  let initialTab = "profile";
-  if (pathname.endsWith("/queue")) initialTab = "queue";
-  else if (pathname.endsWith("/diagnosis")) initialTab = "diagnosis";
-  else if (pathname.endsWith("/history")) initialTab = "history";
+  useEffect(() => {
+    if (pathname.endsWith("/queue")) setActiveTab("queue");
+    else if (pathname.endsWith("/diagnosis")) setActiveTab("diagnosis");
+    else if (pathname.endsWith("/payments")) setActiveTab("payments");
+  }, [pathname]);
 
-  // Handle tab change without navigation
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
@@ -72,10 +70,18 @@ const DoctorDashboard = () => {
 
           <TabsTrigger
             value="diagnosis"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mr-1"
           >
             <FileText className="h-4 w-4 mr-2" />
             <span>Submit Diagnosis</span>
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="payments"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            <span>Payments</span>
           </TabsTrigger>
         </TabsList>
 
@@ -91,6 +97,10 @@ const DoctorDashboard = () => {
 
           <TabsContent value="diagnosis" className="mt-6">
             <DiagnosisSubmission />
+          </TabsContent>
+
+          <TabsContent value="payments" className="mt-6">
+            <DoctorPaymentTab />
           </TabsContent>
         </div>
       </Tabs>
