@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  serverExternalPackages: ['unpdf', '@napi-rs/canvas'],
   typescript: {
     ignoreBuildErrors: true,
   },
