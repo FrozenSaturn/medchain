@@ -5,7 +5,6 @@ import {
   FileText,
   User,
   Search,
-  CreditCard,
   Award,
   Loader2,
 } from "lucide-react";
@@ -150,7 +149,7 @@ const PatientDashboard = () => {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-6 bg-black/50 border border-[#388E3C]/20 backdrop-blur-sm">
+        <TabsList className="grid w-full grid-cols-5 bg-black/50 border border-[#388E3C]/20 backdrop-blur-sm">
           <TabsTrigger
             value="profile"
             className="flex items-center space-x-2 data-[state=active]:bg-[#388E3C]/20 data-[state=active]:text-[#388E3C] data-[state=active]:border-[#388E3C]/30 text-[#FAFAFA]/70 hover:text-[#FAFAFA] font-sf-pro-regular"
@@ -178,13 +177,6 @@ const PatientDashboard = () => {
           >
             <FileText className="h-4 w-4" />
             <span>Records</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="payments"
-            className="flex items-center space-x-2 data-[state=active]:bg-[#388E3C]/20 data-[state=active]:text-[#388E3C] data-[state=active]:border-[#388E3C]/30 text-[#FAFAFA]/70 hover:text-[#FAFAFA] font-sf-pro-regular"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span>Payments</span>
           </TabsTrigger>
           <TabsTrigger
             value="nfts"
