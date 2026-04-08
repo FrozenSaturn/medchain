@@ -118,10 +118,10 @@ const DoctorSearch = ({ userId }: { userId: string | null }) => {
             }),
             rating: 4.5,
             reviews: 0,
-            location: "MedChain Healthcare",
+            location: "MedConnect Healthcare",
             availability: "Available for booking",
-            phone: "Via MedChain",
-            email: "Via MedChain",
+            phone: "Via MedConnect",
+            email: "Via MedConnect",
             dbId: id,
             consultationFee: Number.isFinite(consultationFee)
               ? consultationFee
@@ -222,7 +222,7 @@ const DoctorSearch = ({ userId }: { userId: string | null }) => {
               </div>
               {doctor.dbId && (
                 <Badge className="w-fit mt-2 bg-[#388E3C]/20 text-[#388E3C] border-[#388E3C]/30 text-xs">
-                  Verified on MedChain
+                  Verified on MedConnect
                 </Badge>
               )}
             </CardHeader>

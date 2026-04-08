@@ -9,8 +9,8 @@ import { Providers } from "@/providers/providers"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TheDavaProject - Trust Without Compromise",
-  description: "TheDavaProject is a platform for creating and sharing digital medical assets",
+  title: "MedConnect - Trust Without Compromise",
+  description: "MedConnect is a platform for creating and sharing digital medical assets",
 }
 
 export default function RootLayout({

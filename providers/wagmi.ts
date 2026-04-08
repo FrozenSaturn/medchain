@@ -32,7 +32,7 @@ export const coreDAOTestNet: Chain = {
 
 
 export const config = getDefaultConfig({
-  appName: 'Dava',
+  appName: 'MedConnect',
   projectId: '69fdf73f900171ff367d9424c6a9c1e3',
   chains: [
     polygon,

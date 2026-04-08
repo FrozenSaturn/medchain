@@ -1,16 +1,16 @@
 <div align="center">
-  <img src="public/logomain.png" alt="Dava Logo" width="150"/>
-  <h1>MedChain</h1>
+  <img src="public/logomain.png" alt="MedConnect Logo" width="150"/>
+  <h1>MedConnect</h1>
   <p>A modern, decentralized healthcare platform connecting patients, doctors, and administrators.</p>
 </div>
 
 ---
 
-**MedChain** is a next-generation healthcare application built with Next.js, Supabase, and blockchain technology. It aims to streamline medical interactions by providing a transparent, secure, and efficient platform for managing appointments, medical records, and payments. By leveraging NFTs for medical records, MedChain puts patients in control of their own data.
+**MedConnect** is a next-generation healthcare application built with Next.js, Supabase, and blockchain technology. It aims to streamline medical interactions by providing a transparent, secure, and efficient platform for managing appointments, medical records, and payments. By leveraging NFTs for medical records, MedConnect puts patients in control of their own data.
 
 ## ✨ Core Features
 
-MedChain offers a role-based experience tailored to the needs of each user group.
+MedConnect offers a role-based experience tailored to the needs of each user group.
 
 ### 🧑‍⚕️ For Patients
 
@@ -62,7 +62,7 @@ Follow these instructions to set up and run the project locally.
 
     ```bash
     git clone <your-repo-url>
-    cd MedChain
+    cd MedConnect
     ```
 
 2.  **Install dependencies:**
@@ -94,14 +94,14 @@ Follow these instructions to set up and run the project locally.
     npm run dev
     ```
 
-6.  Open https://medchain-theta.vercel.app in your browser to see the application.
+6.  Open the deployed MedConnect URL in your browser to see the application.
 
 ## 📁 Project Structure
 
 Of course. Here is the project structure you provided, formatted as a markdown code block:
 
 ```markdown
-MedChain/
+MedConnect/
 ├── app/ # Next.js App Router: pages and API routes
 │ ├── (auth)/ # Authentication routes (login, signup)
 │ ├── dashboard/ # Main dashboards (admin, doctor, patient)
