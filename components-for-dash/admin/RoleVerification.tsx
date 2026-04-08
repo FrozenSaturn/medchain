@@ -266,30 +266,35 @@ const RoleVerification = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+      <Card className="bg-[#0f1319] border-[#2a2f38]">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 pb-4">
           <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5" />
-            <span>Role Verification Panel</span>
+            <Shield className="h-5 w-5 text-[#388E3C]" />
+            <span className="text-[#FAFAFA]">Role Verification Panel</span>
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={() => fetchRoleRequests()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchRoleRequests()}
+            className="border-[#388E3C]/40 text-[#388E3C] hover:bg-[#388E3C]/10 hover:text-[#4CAF50]"
+          >
             Refresh
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-[#FAFAFA]/40" />
               <Input
                 placeholder="Search by name or wallet address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-black/40 border-[#2a2f38] text-[#FAFAFA] placeholder:text-[#FAFAFA]/40"
               />
             </div>
             <div>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-black/40 border-[#2a2f38] text-[#FAFAFA]">
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -300,7 +305,7 @@ const RoleVerification = () => {
             </div>
             <div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-black/40 border-[#2a2f38] text-[#FAFAFA]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -315,64 +320,70 @@ const RoleVerification = () => {
 
       <div className="space-y-4">
         {filteredRequests.map((request: RoleRequest) => (
-          <Card key={request.id} className="hover:shadow-md transition-shadow overflow-hidden">
+          <Card
+            key={request.id}
+            className="overflow-hidden border-[#2a2f38] bg-[#0f1319] hover:border-[#388E3C]/40 transition-colors"
+          >
             <CardContent className="p-6">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
                 <div className="min-w-0 flex-1 space-y-4">
                   <div className="space-y-3">
-                    <h3 className="text-lg font-semibold leading-tight break-words">
+                    <h3 className="text-lg font-semibold leading-tight break-words text-[#FAFAFA]">
                       {request.name}
                     </h3>
                     <div className="flex flex-wrap items-center gap-2">
                       {getRoleBadge(request.requestedRole)}
                       {getStatusBadge(request.status)}
-                      <Badge variant="outline" className="text-xs font-normal">
+                      <Badge
+                        variant="outline"
+                        className="text-xs font-normal border-[#2a2f38] text-[#FAFAFA]/70"
+                      >
                         DB role: {request.currentRole}
                       </Badge>
                     </div>
                   </div>
 
-                  <dl className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+                  <dl className="grid grid-cols-1 gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
                     <div className="space-y-1">
-                      <dt className="font-medium text-muted-foreground">
+                      <dt className="font-medium text-[#FAFAFA]/60">
                         Wallet address
                       </dt>
-                      <dd className="break-all font-mono text-xs leading-relaxed">
+                      <dd className="break-all font-mono text-xs leading-relaxed text-[#FAFAFA]/85">
                         {request.walletAddress || "N/A"}
                       </dd>
                     </div>
                     <div className="space-y-1">
-                      <dt className="font-medium text-muted-foreground">
+                      <dt className="font-medium text-[#FAFAFA]/60">
                         Request date
                       </dt>
-                      <dd>{request.requestDate}</dd>
+                      <dd className="text-[#FAFAFA]/85">{request.requestDate}</dd>
                     </div>
                     <div className="space-y-1">
-                      <dt className="font-medium text-muted-foreground">
+                      <dt className="font-medium text-[#FAFAFA]/60">
                         Specialization
                       </dt>
-                      <dd className="break-words">
+                      <dd className="break-words text-[#FAFAFA]/85">
                         {request.specialization || "N/A"}
                       </dd>
                     </div>
                     <div className="space-y-1">
-                      <dt className="font-medium text-muted-foreground">
+                      <dt className="font-medium text-[#FAFAFA]/60">
                         Consultation fee
                       </dt>
-                      <dd>
+                      <dd className="text-[#FAFAFA]/85">
                         {request.consultation_fee != null
                           ? `$${Number(request.consultation_fee).toFixed(2)}`
                           : "N/A"}
                       </dd>
                     </div>
                     <div className="space-y-1 sm:col-span-2">
-                      <dt className="font-medium text-muted-foreground">Bio</dt>
-                      <dd className="break-words leading-relaxed">
+                      <dt className="font-medium text-[#FAFAFA]/60">Bio</dt>
+                      <dd className="break-words leading-relaxed text-[#FAFAFA]/85">
                         {request.bio || "N/A"}
                       </dd>
                     </div>
                     <div className="space-y-2 sm:col-span-2">
-                      <dt className="font-medium text-muted-foreground">
+                      <dt className="font-medium text-[#FAFAFA]/60">
                         Documents
                       </dt>
                       <dd>
@@ -389,7 +400,7 @@ const RoleVerification = () => {
                               </Badge>
                             ))
                           ) : (
-                            <span className="text-muted-foreground text-xs">
+                            <span className="text-[#FAFAFA]/50 text-xs">
                               No documents
                             </span>
                           )}
@@ -400,13 +411,13 @@ const RoleVerification = () => {
                 </div>
 
                 {request.status === "pending" && (
-                  <div className="flex shrink-0 flex-col gap-2 border-t border-border pt-4 lg:w-44 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                  <div className="flex shrink-0 flex-col gap-2 border-t border-[#2a2f38] pt-4 lg:w-48 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
                     <Button
                       type="button"
                       onClick={() =>
                         handleApprove(request.userId, request.walletAddress)
                       }
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-[#388E3C] hover:bg-[#2f7a33] text-white"
                       disabled={processingId === request.userId}
                     >
                       {processingId === request.userId ? (
@@ -420,7 +431,7 @@ const RoleVerification = () => {
                       type="button"
                       variant="destructive"
                       onClick={() => handleReject(request.userId)}
-                      className="w-full"
+                      className="w-full bg-[#b3261e] hover:bg-[#8f1f19] text-white"
                       disabled={processingId === request.userId}
                     >
                       <X className="h-4 w-4 mr-2 shrink-0" />
@@ -435,13 +446,13 @@ const RoleVerification = () => {
       </div>
 
       {filteredRequests.length === 0 && (
-        <Card>
+        <Card className="bg-[#0f1319] border-[#2a2f38]">
           <CardContent className="p-8 text-center space-y-2">
-            <Shield className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
+            <Shield className="h-12 w-12 mx-auto text-[#388E3C]/60 mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-[#FAFAFA]">
               No pending role requests
             </h3>
-            <p className="text-gray-600 max-w-lg mx-auto">
+            <p className="text-[#FAFAFA]/60 max-w-lg mx-auto">
               Patients submit an application from Account Settings → Profile
               (&quot;Apply for doctor verification&quot;). You can also seed a
               row with{" "}

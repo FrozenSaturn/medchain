@@ -22,6 +22,19 @@ interface ChatResponse {
   error?: boolean;
 }
 
+function toPlainText(content: string): string {
+  if (!content) return "";
+  return content
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`{1,3}([^`]+)`{1,3}/g, "$1")
+    .replace(/^\s*[-*+]\s+/gm, "• ")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 const RAGChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -84,7 +97,7 @@ const RAGChatbot = () => {
 
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.content,
+        content: toPlainText(data.content),
         timestamp: data.timestamp,
       };
 
@@ -116,8 +129,8 @@ const RAGChatbot = () => {
   };
 
   return (
-    <Card className="w-full h-[600px] flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="w-full h-[calc(100vh-10rem)] min-h-[520px] max-h-[780px] sticky top-6 flex flex-col overflow-hidden border-[#388E3C]/20 bg-black/40 backdrop-blur-sm">
+      <CardHeader className="pb-3 shrink-0 border-b border-[#388E3C]/20">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
             <Bot className="h-5 w-5 text-blue-600" />
@@ -142,9 +155,9 @@ const RAGChatbot = () => {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 px-4">
-          <div className="space-y-4 pb-4">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        <ScrollArea className="flex-1 min-h-0 px-4">
+          <div className="space-y-4 py-4">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground py-8">
                 <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -167,10 +180,10 @@ const RAGChatbot = () => {
                 }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                  className={`max-w-[88%] rounded-xl px-4 py-3 shadow-sm ${
                     message.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-muted"
+                      ? "bg-[#388E3C] text-white"
+                      : "bg-[#111318] border border-[#2A2D34] text-[#FAFAFA]"
                   }`}
                 >
                   <div className="flex items-start space-x-2">
@@ -178,7 +191,7 @@ const RAGChatbot = () => {
                       <Bot className="h-4 w-4 mt-0.5 text-blue-600 flex-shrink-0" />
                     )}
                     <div className="flex-1">
-                      <p className="text-sm whitespace-pre-wrap">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {message.content}
                       </p>
                       <p className="text-xs opacity-70 mt-1">
@@ -207,7 +220,7 @@ const RAGChatbot = () => {
           <div ref={messagesEndRef} />
         </ScrollArea>
 
-        <div className="border-t p-4">
+        <div className="border-t border-[#388E3C]/20 p-4 shrink-0 bg-black/30">
           <div className="flex space-x-2">
             <Input
               value={inputMessage}

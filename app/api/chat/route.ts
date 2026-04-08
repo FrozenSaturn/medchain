@@ -1,10 +1,11 @@
-import { google } from "@ai-sdk/google"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { streamText, tool } from "ai"
 import { z } from "zod"
 import {
   modelSupportsDeveloperInstruction,
   resolveGeminiTextModel,
 } from "@/lib/gemini-default-model"
+import { getGeminiApiKeyOrThrow } from "@/lib/server/gemini-key"
 
 export const maxDuration = 30
 
@@ -41,6 +42,8 @@ function injectSystemIntoFirstUserMessage(
 
 export async function POST(req: Request) {
   const { messages } = await req.json()
+  const apiKey = getGeminiApiKeyOrThrow()
+  const google = createGoogleGenerativeAI({ apiKey })
 
   const modelId = resolveGeminiTextModel()
   const useSystemInstruction = modelSupportsDeveloperInstruction(modelId)

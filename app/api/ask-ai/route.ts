@@ -1,14 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import { resolveGeminiTextModel } from "@/lib/gemini-default-model";
+import { getGeminiApiKeyOrThrow } from "@/lib/server/gemini-key";
 
-// Initialize the Gemini AI client
-// In production, use environment variables for the API key
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+function getGenAI(): GoogleGenAI {
+  return new GoogleGenAI({ apiKey: getGeminiApiKeyOrThrow() });
+}
 
 export async function POST(req: Request) {
   try {
     const { message, history } = await req.json();
+    const genAI = getGenAI();
 
     // Create a chat session with Gemini
     const chat = genAI.chats.create({

@@ -3,14 +3,12 @@ import {
   DEFAULT_GEMINI_TEXT_MODEL,
   resolveGeminiRecordSummaryModel,
 } from "@/lib/gemini-default-model";
+import { getGeminiApiKeyOrThrow } from "@/lib/server/gemini-key";
 
 const MAX_INPUT_CHARS = 48_000;
 
 export async function summarizeMedicalPdfText(extractedText: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured");
-  }
+  const apiKey = getGeminiApiKeyOrThrow();
 
   const trimmed = extractedText.replace(/\s+/g, " ").trim();
   if (!trimmed) {

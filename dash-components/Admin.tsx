@@ -1,26 +1,21 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Shield, Users, Calendar, CreditCard, Bell } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Shield, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RoleVerification from "../components-for-dash/admin/RoleVerification";
-import AppointmentManagement from "../components-for-dash/admin/AppointmentManagement";
-import PaymentTracking from "../components-for-dash/admin/PaymentTracking";
-import AdminProfileBento from "../components-for-dash/admin/AdminProfileBento";
 
 const AdminPage = () => {
-  const router = useRouter();
   const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState("profile");
+  const getInitialTab = () => {
+    if (pathname.endsWith("/roles")) return "profile";
+    if (pathname.endsWith("/appointments")) return "profile";
+    if (pathname.endsWith("/payments")) return "profile";
+    return "profile";
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab);
 
-  // Determine the active tab from the path
-  let initialTab = "profile";
-  if (pathname.endsWith("/roles")) initialTab = "roles";
-  else if (pathname.endsWith("/appointments")) initialTab = "appointments";
-  else if (pathname.endsWith("/payments")) initialTab = "payments";
-
-  // Handle tab change without navigation
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
@@ -83,48 +78,12 @@ const AdminPage = () => {
             <Users className="h-4 w-4 mr-2" />
             <span>Profile</span>
           </TabsTrigger>
-
-          <TabsTrigger
-            value="roles"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mr-1"
-          >
-            <Shield className="h-4 w-4 mr-2" />
-            <span>Role Verification</span>
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="appointments"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm mr-1"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            <span>Appointments</span>
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="payments"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            <span>Payments</span>
-          </TabsTrigger>
         </TabsList>
 
         {/* Equal spacing between tab content areas */}
         <div className="space-y-6">
           <TabsContent value="profile" className="mt-6">
-            <AdminProfileBento />
-          </TabsContent>
-
-          <TabsContent value="roles" className="mt-6">
             <RoleVerification />
-          </TabsContent>
-
-          <TabsContent value="appointments" className="mt-6">
-            <AppointmentManagement />
-          </TabsContent>
-
-          <TabsContent value="payments" className="mt-6">
-            <PaymentTracking />
           </TabsContent>
         </div>
       </Tabs>
